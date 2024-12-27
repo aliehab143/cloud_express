@@ -111,3 +111,4 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 const PORT = 5001;
 app.listen(PORT, () => {
   console.log(`Backend server running on http://localhost:${PORT}`);
+});
