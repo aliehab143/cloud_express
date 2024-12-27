@@ -7,16 +7,20 @@ const pdfParse = require("pdf-parse");
 const mammoth = require("mammoth");
 
 const app = express();
-app.use(cors()); // Enable CORS
+app.use(cors()); // Enable CORS for inter-service communication
 app.use(express.json()); // Parse JSON requests
 
 const upload = multer({ dest: "uploads/" }); // Configure multer for file uploads
+
+// Set Nginx container hostname for forwarding requests
+const NGINX_HOST = process.env.NGINX_HOST || "nginx-container";
+const NGINX_PORT = process.env.NGINX_PORT || "80";
 
 // POST route for English to Arabic Translation
 app.post("/translate/en2ar", async (req, res) => {
   try {
     const { text } = req.body;
-    const response = await axios.post("http://localhost/translate/en2ar", { text });
+    const response = await axios.post(`http://${NGINX_HOST}:${NGINX_PORT}/translate/en2ar`, { text });
     const taskId = response.data.task_id;
 
     res.status(202).json({ task_id: taskId });
@@ -30,7 +34,7 @@ app.post("/translate/en2ar", async (req, res) => {
 app.post("/translate/ar2en", async (req, res) => {
   try {
     const { text } = req.body;
-    const response = await axios.post("http://localhost/translate/ar2en", { text });
+    const response = await axios.post(`http://${NGINX_HOST}:${NGINX_PORT}/translate/ar2en`, { text });
     const taskId = response.data.task_id;
 
     res.status(202).json({ task_id: taskId });
@@ -44,7 +48,7 @@ app.post("/translate/ar2en", async (req, res) => {
 app.post("/summarize", async (req, res) => {
   try {
     const { text, style } = req.body;
-    const response = await axios.post("http://localhost/summary", { text, style });
+    const response = await axios.post(`http://${NGINX_HOST}:${NGINX_PORT}/summary`, { text, style });
     const taskId = response.data.task_id;
 
     res.status(202).json({ task_id: taskId });
@@ -58,7 +62,7 @@ app.post("/summarize", async (req, res) => {
 app.get("/status/:taskId", async (req, res) => {
   try {
     const { taskId } = req.params;
-    const response = await axios.get(`http://localhost/response/${taskId}`);
+    const response = await axios.get(`http://${NGINX_HOST}:${NGINX_PORT}/response/${taskId}`);
     res.json(response.data);
   } catch (error) {
     console.error("Error in /status/:taskId:", error);
@@ -106,5 +110,4 @@ app.post("/upload", upload.single("file"), async (req, res) => {
 // Start the server
 const PORT = 5001;
 app.listen(PORT, () => {
-  console.log(`Express server running on http://localhost:${PORT}`);
-});
+  console.log(`Backend server running on http://localhost:${PORT}`);
